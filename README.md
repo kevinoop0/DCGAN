@@ -4,7 +4,7 @@ The code add residual block and simplify code in the basic of source code. If yo
 
 Since the code add residual block, you can use `data_augment.py` to augment data, which can get better results.
 
-In addition, this code uses two GPUs to perform parallel operations. If you want to use two GPU, you need to ues the following code
+In addition, this code uses one GPU . If you want to use two GPUs, you need to ues the following code to perform parallel operations
 
 ```python
 # netg = t.nn.DataParallel(netg, device_ids=[0, 1])
