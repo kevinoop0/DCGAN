@@ -2,7 +2,6 @@
 import os
 import torch
 import torchvision as tv
-import ipdb
 import visdom
 from model import NetD,NetG
 import numpy as np
@@ -11,24 +10,23 @@ from torch.utils.data import DataLoader
 class Config(object):
     data_path='./data'
     num_workers = 4
-    image_size = 96
-    batch_size = 256
-    max_epoch = 50
-    lr = 1e-4
-    beta = 0.5
-    gpu = True
-    nz = 100
-    ngf = 64
-    ndf = 64
-    save_path = 'imgs/'  # 生成图片保存路径
+    image_size = 96 # the size of image
+    batch_size = 256 # the batch size of dataset
+    max_epoch = 50 # the max iteration
+    lr = 1e-4 # learning rate of Adam
+    beta = 0.5 # the first parameter of optimizer
+    gpu = True # use gpu
+    nz = 100 # the dim of noise
+    ngf = 64 # channels of generator feature
+    ndf = 64 # channels of discriminator feature
+    save_path = 'imgs/'  # the path of saving image
 
-    vis = True  # 是否使用visdom可视化
-    plot_every = 10  # 每间隔20 batch，visdom画图一次
+    vis = True  # use visdom
+    plot_every = 10  # every 10 step , visiual once
 
-    d_every = 1  # 每1个batch训练一次判别器
-    g_every = 5  # 每5个batch训练一次生成器
-    save_every = 100  # 没10个epoch保存一次模型
-    netd_path = None  # 'checkpoints/netd_.pth' #预训练模型
+    d_every = 1  # every 1 step , train discriminator once
+    g_every = 5  # every 10 step , train generator once
+    netd_path = None  # 'checkpoints/netd_.pth'
     netg_path = None  # 'checkpoints/netg_211.pth'
 
 opt=Config()
@@ -49,8 +47,9 @@ def train(**kwargs):
     dataloader = DataLoader(dataset,batch_size=opt.batch_size,shuffle=True,num_workers=opt.num_workers,drop_last=True)
 
     netd,netg = NetD(opt),NetG(opt)
-    netg = t.nn.DataParallel(netg, device_ids=[0, 1])
-    netd = t.nn.DataParallel(netd, device_ids=[0, 1])
+    # parallel operations
+    # netg = torch.nn.DataParallel(netg, device_ids=[0, 1])
+    # netd = torch.nn.DataParallel(netd, device_ids=[0, 1])
     netd.to(device)
     netg.to(device)
     optimizer_g = torch.optim.Adam(netg.parameters(),lr = opt.lr,betas=(opt.beta,0.999))
@@ -94,10 +93,10 @@ def train(**kwargs):
                 indexs = scores.topk(64)[1]
                 result = []
                 for ii in indexs:
-                    # ipdb.set_trace()
                     result.append(fix_fake_imgs.data[ii].detach().cpu()* 0.5 + 0.5)
                 vis.images(torch.stack(result), win='fake_img')
                 vis.images(real_img.data.cpu().numpy()[:64] * 0.5 + 0.5, win='real')
+                # plot loss curve
                 # vis.line(Y=np.array([error_d/bs]),X=np.array([i+1]),win='error_d',update='append')
                 # vis.line(Y=np.array([error_g.item()/bs]),X=np.array([i+1]),win='error_g',update='append')
                 print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\t D(x): %.4f\t D(G(z)): %.4f / %.4f' % (
@@ -105,9 +104,6 @@ def train(**kwargs):
 
 
 def generate(**kwargs):
-    """
-    随机生成动漫头像，并根据netd的分数选择较好的
-    """
     for k_, v_ in kwargs.items():
         setattr(opt, k_, v_)
 
@@ -123,17 +119,17 @@ def generate(**kwargs):
     netd.to(device)
     netg.to(device)
 
-    # 生成图片，并计算图片在判别器的分数
+    # generate image and score the result
     fake_img = netg(noises)
     scores = netd(fake_img).detach()
 
-    # 挑选最好的某几张
+    # pick good image
     indexs = scores.topk(opt.gen_num)[1]
     result = []
     for ii in indexs:
         result.append(fake_img.data[ii])
-    # 保存图片
-    tv.utils.save_image(t.stack(result), opt.gen_img, normalize=True, range=(-1, 1))
+    # save image
+    tv.utils.save_image(torch.stack(result), opt.gen_img, normalize=True, range=(-1, 1))
 
 if __name__ == '__main__':
     import fire
