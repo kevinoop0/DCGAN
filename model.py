@@ -89,25 +89,25 @@ class NetD(nn.Module):
             # 输入 3 x 96 x 96
             nn.Conv2d(3, ndf, 5, 3, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # ResidualBlock(ndf, 5, 1, 2),
+            # ResidualBlock(ndf),
             # 输出 (ndf) x 32 x 32
 
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            ResidualBlock(ndf * 2, 5, 1, 2),
+            ResidualBlock(ndf * 2),
             # 输出 (ndf*2) x 16 x 16
 
             nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            ResidualBlock(ndf * 4, 5, 1, 2),
+            ResidualBlock(ndf * 4),
             # 输出 (ndf*4) x 8 x 8
 
             nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # ResidualBlock(ndf * 8, 5, 1, 2),
+            # ResidualBlock(ndf * 8),
             # 输出 (ndf*8) x 4 x 4
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()  # 输出一个数(概率)
